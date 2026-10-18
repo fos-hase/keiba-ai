@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2305060a'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%2346f0d2' stroke-width='5'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{
   --bg:#05060a; --bg2:#0a0c14; --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
@@ -181,12 +181,13 @@ const pct=x=>x==null?"–":(x*100).toFixed(x>=0.1?0:1);
 const frame=(n,N)=>{if(!N||N<=8)return Math.min(n,8);const b=Math.floor(N/8),x=N%8;let c=0;for(let f=1;f<=8;f++){c+=b+(f>8-x?1:0);if(n<=c)return f}return 8};
 const nowHM=()=>{const d=new Date(Date.now()+(9*60+new Date().getTimezoneOffset())*60000);return d.toTimeString().slice(0,5)};
 
+const tfetch=(u,o={},ms=5000)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(u,{...o,signal:c.signal,cache:"no-store"}).finally(()=>clearTimeout(t))};
 async function load(){
-  try{const c=await fetch("config.json?"+Date.now());if(c.ok)S.api=(await c.json()).api||""}catch(e){}
-  let d=null;
-  if(S.api&&S.key){try{const r=await fetch(S.api+"/api/predictions",{headers:{"X-Token":S.key}});if(r.ok)d=await r.json()}catch(e){}}
-  if(!d){try{const r=await fetch("predictions.json?"+Date.now());if(r.ok)d=await r.json()}catch(e){}}
-  S.data=d;render();
+  try{const r=await tfetch("predictions.json?"+Date.now(),{},8000);if(r.ok){S.data=await r.json();render()}}catch(e){}
+  try{const c=await tfetch("config.json?"+Date.now(),{},4000);if(c.ok)S.api=(await c.json()).api||""}catch(e){}
+  if(S.api&&S.key){try{const r=await tfetch(S.api+"/api/predictions",{headers:{"X-Token":S.key}},6000);
+    if(r.ok){const d=await r.json();if(d&&d.races&&d.races.length&&(!S.data||(d.generated||"")>=(S.data.generated||""))){S.data=d;render()}}}catch(e){}}
+  if(!S.data)$("#list").innerHTML='<div class="empty">NO DATA</div>';
 }
 
 function render(){
@@ -273,6 +274,27 @@ function upPane(r,N){
     ${keys?`<div class="sec">荒れた時に来る馬</div><div class="keys">${keys}</div>`:""}
     ${cs?`<div class="row urow hd"><span></span><span class="sec" style="margin:0">荒れた時の組み合わせ</span><span>荒れたら</span><span>全体</span><span>オッズ</span></div>${cs}`:""}`;
 }
+
+async function refresh(){
+  const b=$("#refresh");
+  if(!S.key){$("#sheet").classList.add("on");setTimeout(()=>$("#key").focus(),50);return}
+  if(!S.api){b.classList.add("ng");setTimeout(()=>b.classList.remove("ng"),1500);return}
+  const one=S.open.size===1?[...S.open][0]:null;
+  b.classList.remove("ok","ng");b.classList.add("run");
+  try{
+    const r=await tfetch(S.api+"/api/refresh",{method:"POST",headers:{"X-Token":S.key,"Content-Type":"application/json"},body:JSON.stringify(one?{race_id:one}:{})},10000);
+    if(r.status===401){S.key="";localStorage.removeItem("key");throw 0}
+    if(!r.ok&&r.status!==409)throw 0;
+    for(let i=0;i<300;i++){await new Promise(z=>setTimeout(z,4000));
+      let h;try{h=await (await tfetch(S.api+"/api/health",{headers:{"X-Token":S.key}},8000)).json()}catch(e){continue}
+      if(!h.busy){if(h.error)throw 0;break}}
+    await load();b.classList.replace("run","ok");setTimeout(()=>b.classList.remove("ok"),2500);
+  }catch(e){b.classList.remove("run");b.classList.add("ng");setTimeout(()=>b.classList.remove("ng"),2500)}
+}
+$("#refresh").onclick=refresh;
+$("#keyform").onsubmit=e=>{e.preventDefault();S.key=$("#key").value.trim();if(S.key)localStorage.setItem("key",S.key);$("#sheet").classList.remove("on");load().then(()=>S.key&&refresh())};
+$("#sheet").onclick=e=>{if(e.target.id==="sheet")$("#sheet").classList.remove("on")};
+load();setInterval(()=>S.data&&render(),60000);
 </script>
 </body>
 </html>
