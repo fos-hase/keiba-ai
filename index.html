@@ -144,6 +144,11 @@ header{display:flex;align-items:center;gap:12px;padding:6px 0 18px;position:stic
 .chips span{font:500 11px var(--mono);color:var(--tx2);border:1px solid var(--line2);border-radius:8px;padding:5px 8px}
 .chips span b{color:var(--tx);font-weight:600;margin-left:4px}
 .ub i{background:linear-gradient(90deg,#ff5a7a,#d65cff);box-shadow:0 0 10px rgba(255,90,122,.35)}
+.ringw{display:flex;flex-direction:column;align-items:center;gap:6px;flex:none}
+.thr{font:500 9.5px var(--mono);color:var(--tx3);letter-spacing:.06em}
+.keys{display:flex;gap:8px;margin:2px 6px 8px;overflow-x:auto;scrollbar-width:none}
+.kh{display:flex;align-items:center;gap:6px;border:1px solid rgba(255,90,122,.28);background:rgba(255,90,122,.06);border-radius:10px;padding:4px 8px 4px 4px}
+.kh b{font:600 12px var(--mono)}
 </style>
 </head>
 <body>
@@ -254,8 +259,11 @@ function upPane(r,N){
   const mx=Math.max(...(u.combos||[]).map(c=>c.p_cond||0),0.01);
   const cs=(u.combos||[]).map(c=>`<div class="row" style="grid-template-columns:auto 1fr 54px 46px">
       <span class="bt">${c.t}</span><div class="hn">${combo(c.c,N,ORD.has(c.t))}<div class="bar ub"><i style="width:${((c.p_cond||0)/mx*100).toFixed(1)}%"></i></div></div>
-      <div class="pc">${pct(c.p_cond)}<small>${pct(c.p_flat)}</small></div><div class="od">${x2(c.odds)}<small>×</small></div></div>`).join("");
-  return `<div class="up"><div class="ring" style="--v:${v}"><b>${v}%</b></div><div class="chips">${chips}</div></div>
+      <div class="pc">${pct(c.p_cond)}<small>${pct(c.p_flat)}</small></div><div class="od">${c.est?"≈":""}${x2(c.odds)}<small>×</small></div></div>`).join("");
+  const keys=(h.keys||[]).map(k=>`<span class="kh"><span class="num f${frame(k.n,N)}">${k.n}</span><b>${pct(k.p)}</b></span>`).join("");
+  const thr=h.thr?`<small class="thr">${h.t||""} ¥${(+h.thr).toLocaleString()}+</small>`:"";
+  return `<div class="up"><div class="ringw"><div class="ring" style="--v:${v}"><b>${v}%</b></div>${thr}</div><div class="chips">${chips}</div></div>
+    ${keys?`<div class="keys">${keys}</div>`:""}
     <div class="legend"><span><i style="background:linear-gradient(90deg,#ff5a7a,#d65cff)"></i>IF UPSET</span><span>FLAT</span></div>${cs}`;
 }
 
