@@ -168,7 +168,7 @@ function card(r,done,next){
       <div class="hn"><b>${h.name}</b><s>${h.jockey||""}</s>
         <div class="bar"><i style="width:${((h.ai||0)/max*100).toFixed(1)}%"></i>${h.mkt!=null?`<u style="left:${(h.mkt/max*100).toFixed(1)}%"></u>`:""}</div></div>
       <div class="pc">${pct(h.ai)}<small>${pct(h.mkt)}</small></div>
-      <div class="od">${h.odds??"–"}<small>${h.pop?h.pop+"番":""}</small></div></div>`).join("");
+      <div class="od">${h.odds??"–"}<small>${h.pop?h.pop+"人気":""}</small></div></div>`).join("");
   const g=r.grade&&!["OP",""].includes(r.grade)?`<span class="tag g">${r.grade}</span>`:"";
   const v=val.size?`<span class="tag v">VALUE</span>`:"";
   return `<section class="race${done?" done":""}${next?" next":""}${S.open.has(r.id)?" open":""}" data-id="${r.id}">
