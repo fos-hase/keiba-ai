@@ -188,6 +188,7 @@ async function load(){
   if(S.api&&S.key){try{const r=await tfetch(S.api+"/api/predictions",{headers:{"X-Token":S.key}},6000);
     if(r.ok){const d=await r.json();if(d&&d.races&&d.races.length&&(!S.data||(d.generated||"")>=(S.data.generated||""))){S.data=d;render()}}}catch(e){}}
   if(!S.data)$("#list").innerHTML='<div class="empty">NO DATA</div>';
+  $("#refresh").style.display=S.api?"":"none";
 }
 
 function render(){
